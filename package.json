@@ -1,0 +1,27 @@
+{
+  "name": "WiHiFi",
+  "version": "0.0.0",
+  "description": "WiHiFi ======",
+  "main": "server.js",
+  "dependencies": {
+    "lame": "~1.0.3",
+    "node-ffprobe": "~1.2.2",
+    "throttle": "~1.0.3",
+    "speaker": "~0.0.10"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lukeb-uk/WiHiFi.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lukeb-uk/WiHiFi/issues"
+  },
+  "homepage": "https://github.com/lukeb-uk/WiHiFi"
+}
