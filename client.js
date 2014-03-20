@@ -6,7 +6,8 @@ var net = require('net'),
     Transform = require('stream').Transform,
     stream = new Transform(),
     streamBuffer = "",
-    splitPos = -1;
+    splitStart = -1;
+    splitEnd = -1;
     client = net.connect({port: 8080, host: "127.0.0.1"}, function() {
 });
 
@@ -19,12 +20,14 @@ stream._transform = function (chunk, enc, next) {
 var i = 0;
 client.on('data', function(data){
     streamBuffer += data.toString('utf8');
-    splitPos = streamBuffer.indexOf('}');
-    if (splitPos !== -1) {
-        var string = streamBuffer.slice(0, (splitPos+1)),
+    splitStart = streamBuffer.indexOf('{');
+    splitEnd = streamBuffer.indexOf('}');
+    splitEnd = (splitStart > splitEnd) ? streamBuffer.indexOf('}', (splitEnd+1)):splitEnd;
+    if (splitStart !== -1 && splitEnd !== -1) {
+        var string = streamBuffer.slice(splitStart, (splitEnd+1)),
             obj = JSON.parse(string);
 
-        streamBuffer = streamBuffer.slice((splitPos+1));
+        streamBuffer = streamBuffer.slice((splitEnd+1));
 
         // console.log(obj.time);
         if (startTime === 0) {
@@ -34,7 +37,7 @@ client.on('data', function(data){
                 stream.pipe(speaker)
             }, beforeStart);
         }
-        console.log(new Buffer(obj.chunk, 'hex'));
+        console.log((new Date()).getTime());
         stream.push(new Buffer(obj.chunk, 'hex'));
     }
 })

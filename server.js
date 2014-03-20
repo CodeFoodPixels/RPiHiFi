@@ -26,9 +26,9 @@ pipeExport._transform = function (chunk, enc, next) {
 
 decoder.on("format", function(data){
     throttle = new Throttle((data.sampleRate*data.bitDepth*data.channels)/8);
-    throttledStream = stream.pipe(throttle);
-    exportedStream = throttledStream.pipe(pipeExport),
-    discard = exportedStream.pipe(ws);
+    exportedStream = stream.pipe(pipeExport),
+    throttledStream = exportedStream.pipe(throttle);
+    discard = throttle.pipe(ws);
     server = net.createServer(function(socket) {
             socket.pipe(socket);
             newClients.push(socket);
@@ -41,7 +41,7 @@ decoder.on("format", function(data){
 
 function addNewClients(){
     for (var i = newClients.length; i > 0; i--) {
-        exportedStream.pipe(newClients[i-1]);
+        throttledStream.pipe(newClients[i-1]);
         newClients[i-1].on('error', function (exc) {
             console.log("ignoring exception: " + exc);
         });
