@@ -1,19 +1,23 @@
 var net = require('net'),
-    fs = require('fs')
+    os = require('os'),
+    fs = require('fs'),
     lame = require('lame'),
     Throttle = require('throttle'),
-    throttle = "",
+    ServiceDiscovery = require('node-discovery'),
+    discovery = new ServiceDiscovery(),
     decoder = new lame.Decoder(),
     stream = fs.createReadStream('test.mp3').pipe(decoder),
-    server = "",
-    throttledStream = "",
-    newClients = [],
     Writable = require('stream').Writable,
     Transform = require('stream').Transform,
     ws = new Writable(),
     pipeExport = new Transform(),
-    exportedStream = "",
-    discard = "";
+    interfaces = os.networkInterfaces(),
+    newClients = [],
+    throttledStream,
+    server,
+    throttle,
+    exportedStream,
+    discard;
 
 ws._write = function (chunk, enc, next) {
     next();
@@ -24,11 +28,23 @@ pipeExport._transform = function (chunk, enc, next) {
     next();
 }
 
+for(name in interfaces) {
+    var interface = interfaces[name];
+    interface.forEach(function(entry) {
+        if(entry.family === "IPv4" && entry.internal === false) {
+            discovery.advertise({
+                name: 'service.rpihifi.server',
+                host: entry.address
+            });
+        }
+    });
+}
+
 decoder.on("format", function(data){
     throttle = new Throttle((data.sampleRate*data.bitDepth*data.channels)/8);
-    exportedStream = stream.pipe(pipeExport),
-    throttledStream = exportedStream.pipe(throttle);
-    discard = throttle.pipe(ws);
+    throttledStream = stream.pipe(throttle);
+    exportedStream = throttledStream.pipe(pipeExport),
+    discard = exportedStream.pipe(ws);
     server = net.createServer(function(socket) {
             socket.pipe(socket);
             newClients.push(socket);
@@ -41,7 +57,7 @@ decoder.on("format", function(data){
 
 function addNewClients(){
     for (var i = newClients.length; i > 0; i--) {
-        throttledStream.pipe(newClients[i-1]);
+        exportedStream.pipe(newClients[i-1]);
         newClients[i-1].on('error', function (exc) {
             console.log("ignoring exception: " + exc);
         });
