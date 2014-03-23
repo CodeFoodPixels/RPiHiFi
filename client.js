@@ -11,15 +11,22 @@ var net = require('net'),
     splitStart = -1,
     splitEnd = -1,
     timemodifier = 0,
+    latency = 0,
     dataclient,
     timeclient;
 
 discovery.setup('service.rpihifi.server', function(service, callback){
-    timeclient = net.connect({port: 8081, host: service.host}, function(data) {
+    timeclient = net.connect({port: 8081, host: service.host}, function() {
+        timeclient.write(new Buffer('{"pingtime":"'+(new Date()).getTime()+'"}'));
     });
     timeclient.on('data', function(data){
-        var servertime = JSON.parse(data.toString('utf8'))
-        timemodifier = (new Date()).getTime() - parseInt(servertime.time, 10);
+        var servertime = JSON.parse(data.toString('utf8'));
+        if (servertime.pingtime){
+            latency = Math.ceil(((new Date()).getTime() - servertime.pingtime)/2);
+            console.log(latency)
+        } else {
+            timemodifier = (new Date()).getTime() - parseInt(servertime.time, 10);
+        }
     })
     dataclient = net.connect({port: 8080, host: service.host}, function() {
     });
@@ -36,7 +43,7 @@ discovery.setup('service.rpihifi.server', function(service, callback){
 
             if (startTime === 0) {
                 startTime = obj.time;
-                beforeStart = startTime - (new Date()).getTime() - timemodifier;
+                beforeStart = startTime - (new Date()).getTime() - timemodifier + latency;
                 setTimeout(function(){
                     stream.pipe(speaker)
                 }, beforeStart);
