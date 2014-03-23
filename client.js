@@ -23,13 +23,15 @@ discovery.setup('service.rpihifi.server', function(service, callback){
         var servertime = JSON.parse(data.toString('utf8'));
         if (servertime.pingtime){
             latency = Math.ceil(((new Date()).getTime() - servertime.pingtime)/2);
-            console.log(latency)
         } else {
-            timemodifier = (new Date()).getTime() - parseInt(servertime.time, 10);
+            timemodifier = parseInt(servertime.time, 10) - (new Date()).getTime();
         }
     })
     dataclient = net.connect({port: 8080, host: service.host}, function() {
     });
+    dataclient.on('close', function(){
+        startTime = 0;
+    })
     dataclient.on('data', function(data){
         streamBuffer += data.toString('utf8');
         splitStart = streamBuffer.indexOf('{');
@@ -43,7 +45,7 @@ discovery.setup('service.rpihifi.server', function(service, callback){
 
             if (startTime === 0) {
                 startTime = obj.time;
-                beforeStart = startTime - (new Date()).getTime() - timemodifier + latency;
+                beforeStart = (startTime - (new Date()).getTime() - timemodifier) - latency;
                 setTimeout(function(){
                     stream.pipe(speaker)
                 }, beforeStart);

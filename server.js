@@ -58,7 +58,6 @@ decoder.on("format", function(data){
 timeserver = net.createServer(function(socket) {
     socket.pipe(socket)
     socket.write(new Buffer('{"time":"'+(new Date()).getTime()+'"}'));
-    console.log('new timeclient')
 });
 timeserver.listen(8081);
 
