@@ -14,7 +14,8 @@ var net = require('net'),
     interfaces = os.networkInterfaces(),
     newClients = [],
     throttledStream,
-    server,
+    dataserver,
+    timeserver,
     throttle,
     exportedStream,
     discard;
@@ -45,15 +46,20 @@ decoder.on("format", function(data){
     throttledStream = stream.pipe(throttle);
     exportedStream = throttledStream.pipe(pipeExport),
     discard = exportedStream.pipe(ws);
-    server = net.createServer(function(socket) {
-            socket.pipe(socket);
-            newClients.push(socket);
-        });
-    server.listen(8080);
+    dataserver = net.createServer(function(socket) {
+        newClients.push(socket);
+    });
+    dataserver.listen(8080);
     setInterval(function(){
         addNewClients();
     }, 1000);
-})
+});
+
+timeserver = net.createServer(function(socket) {
+    socket.write(new Buffer('{"time":"'+(new Date()).getTime()+'"}'));
+    console.log('new timeclient')
+});
+timeserver.listen(8081);
 
 function addNewClients(){
     for (var i = newClients.length; i > 0; i--) {

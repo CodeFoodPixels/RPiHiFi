@@ -10,12 +10,20 @@ var net = require('net'),
     streamBuffer = "",
     splitStart = -1,
     splitEnd = -1,
-    client;
+    timemodifier = 0,
+    dataclient,
+    timeclient;
 
-discovery.setup('service.rpihifi.server',function(service, callback){
-    client = net.connect({port: 8080, host: service.host}, function() {
+discovery.setup('service.rpihifi.server', function(service, callback){
+    timeclient = net.connect({port: 8081, host: service.host}, function(data) {
     });
-    client.on('data', function(data){
+    timeclient.on('data', function(data){
+        var servertime = JSON.parse(data.toString('utf8'))
+        timemodifier = (new Date()).getTime() - parseInt(servertime.time, 10);
+    })
+    dataclient = net.connect({port: 8080, host: service.host}, function() {
+    });
+    dataclient.on('data', function(data){
         streamBuffer += data.toString('utf8');
         splitStart = streamBuffer.indexOf('{');
         splitEnd = streamBuffer.indexOf('}');
@@ -26,15 +34,13 @@ discovery.setup('service.rpihifi.server',function(service, callback){
 
             streamBuffer = streamBuffer.slice((splitEnd+1));
 
-            // console.log(obj.time);
             if (startTime === 0) {
                 startTime = obj.time;
-                beforeStart = startTime - (new Date()).getTime();
+                beforeStart = startTime - (new Date()).getTime() - timemodifier;
                 setTimeout(function(){
                     stream.pipe(speaker)
                 }, beforeStart);
             }
-            console.log((new Date()).getTime());
             stream.push(new Buffer(obj.chunk, 'hex'));
         }
     })
