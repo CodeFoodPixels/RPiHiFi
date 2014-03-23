@@ -20,17 +20,25 @@ discovery.setup('service.rpihifi.server', function(service, callback){
         timeclient.write(new Buffer('{"pingtime":"'+(new Date()).getTime()+'"}'));
     });
     timeclient.on('data', function(data){
-        var servertime = JSON.parse(data.toString('utf8'));
-        if (servertime.pingtime){
-            latency = Math.ceil(((new Date()).getTime() - servertime.pingtime)/2);
-        } else {
-            timemodifier = parseInt(servertime.time, 10) - (new Date()).getTime();
+        var timeData = [data.toString('utf8')];
+        if (data.toString('utf8').match("}{")) {
+            timeData = data.toString('utf8').match(/\{[^\}]+?\}/g);
+        }
+        for (var i = 0, len = timeData.length; i<len; i++) {
+            var servertime = JSON.parse(timeData[i].toString('utf8'));
+            if (servertime.pingtime){
+                latency = Math.ceil(((new Date()).getTime() - servertime.pingtime)/2);
+            } else {
+                timemodifier = parseInt(servertime.time, 10) - (new Date()).getTime();
+            }
         }
     })
     dataclient = net.connect({port: 8080, host: service.host}, function() {
     });
     dataclient.on('close', function(){
         startTime = 0;
+        stream = new Transform();
+        streamBuffer = "";
     })
     dataclient.on('data', function(data){
         streamBuffer += data.toString('utf8');
