@@ -56,6 +56,7 @@ initClient = function(service){
         splitStart = streamBuffer.indexOf('{');
         splitEnd = streamBuffer.indexOf('}');
         splitEnd = (splitStart > splitEnd) ? streamBuffer.indexOf('}', (splitEnd+1)):splitEnd;
+        splitStart = (streamBuffer.indexOf('{', (splitStart+1)) !== -1) ? streamBuffer.indexOf('{', (splitStart)):splitStart;
         if (splitStart !== -1 && splitEnd !== -1) {
             var string = streamBuffer.slice(splitStart, (splitEnd+1)),
                 obj = JSON.parse(string);
@@ -64,13 +65,8 @@ initClient = function(service){
 
             if (startTime === 0) {
                 startTime = obj.time;
-                var now = (new Date()).getTime();
-                console.log(latency)
-                console.log(timemodifier)
-                console.log(startTime)
-                beforeStart = (startTime - now - timemodifier) - latency;
+                beforeStart = (startTime - (new Date()).getTime() - timemodifier) - latency;
                 setTimeout(function(){
-                console.log((new Date()).getTime())
                     stream.pipe(speaker)
                 }, beforeStart);
             }

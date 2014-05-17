@@ -2,12 +2,14 @@
   "name": "WiHiFi",
   "version": "0.0.0",
   "description": "WiHiFi ======",
-  "main": "server.js",
+  "main": "client.js",
   "dependencies": {
     "lame": "~1.0.3",
+    "node-discovery": "~0.2.1-1",
     "node-ffprobe": "~1.2.2",
-    "throttle": "~1.0.3",
-    "speaker": "~0.0.10"
+    "speaker": "~0.0.10",
+    "stream-parser": "~0.1.0",
+    "throttle": "~1.0.3"
   },
   "devDependencies": {},
   "scripts": {
