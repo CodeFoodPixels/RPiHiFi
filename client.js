@@ -13,7 +13,8 @@ var net = require('net'),
     timemodifier = 0,
     latency = 0,
     dataclient,
-    timeclient;
+    timeclient,
+    initClient;
 
 discovery.setup('service.rpihifi.server', function(service, callback){
     timeclient = net.connect({port: 8081, host: service.host}, function() {
@@ -33,14 +34,24 @@ discovery.setup('service.rpihifi.server', function(service, callback){
             }
         }
     })
-    dataclient = net.connect({port: 8080, host: service.host}, function() {
-    });
+    initClient(service);
+    callback();
+});
+
+stream._transform = function (chunk, enc, next) {
+    this.push(chunk)
+    next();
+}
+
+initClient = function(service){
+    dataclient = net.connect({port: 8080, host: service.host});
     dataclient.on('close', function(){
         startTime = 0;
         stream = new Transform();
         streamBuffer = "";
     })
     dataclient.on('data', function(data){
+        dataclient.setTimeout(200)
         streamBuffer += data.toString('utf8');
         splitStart = streamBuffer.indexOf('{');
         splitEnd = streamBuffer.indexOf('}');
@@ -48,6 +59,7 @@ discovery.setup('service.rpihifi.server', function(service, callback){
         if (splitStart !== -1 && splitEnd !== -1) {
             var string = streamBuffer.slice(splitStart, (splitEnd+1)),
                 obj = JSON.parse(string);
+                console.log(obj);
 
             streamBuffer = streamBuffer.slice((splitEnd+1));
 
@@ -61,10 +73,10 @@ discovery.setup('service.rpihifi.server', function(service, callback){
             stream.push(new Buffer(obj.chunk, 'hex'));
         }
     })
-    callback();
-});
-
-stream._transform = function (chunk, enc, next) {
-    this.push(chunk)
-    next();
+    dataclient.on('timeout', function(){
+        dataclient.destroy();
+        setTimeout(function(){
+            initClient(service);
+        }, 500);
+    })
 }

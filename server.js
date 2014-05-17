@@ -25,7 +25,7 @@ ws._write = function (chunk, enc, next) {
 };
 
 pipeExport._transform = function (chunk, enc, next) {
-    this.push(new Buffer('{"chunk": "'+chunk.toString('hex')+'", "time": '+((new Date()).getTime()+3000)+'}'));
+    this.push(new Buffer('{"chunk": "'+chunk.toString('hex')+'", "time": '+((new Date()).getTime()+1000)+'}'));
     next();
 }
 
@@ -47,6 +47,7 @@ decoder.on("format", function(data){
     exportedStream = throttledStream.pipe(pipeExport),
     discard = exportedStream.pipe(ws);
     dataserver = net.createServer(function(socket) {
+        console.log('new client!')
         newClients.push(socket);
     });
     dataserver.listen(8080);
@@ -63,6 +64,7 @@ timeserver.listen(8081);
 
 function addNewClients(){
     for (var i = newClients.length; i > 0; i--) {
+        console.log('added client');
         exportedStream.pipe(newClients[i-1]);
         newClients[i-1].on('error', function (exc) {
             console.log("ignoring exception: " + exc);
