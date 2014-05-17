@@ -25,7 +25,7 @@ ws._write = function (chunk, enc, next) {
 };
 
 pipeExport._transform = function (chunk, enc, next) {
-    this.push(new Buffer('{"chunk": "'+chunk.toString('hex')+'", "time": '+((new Date()).getTime()+1000)+'}'));
+    this.push(new Buffer('{"chunk": "'+chunk.toString('hex')+'", "time": '+((new Date()).getTime()+3000)+'}'));
     next();
 }
 

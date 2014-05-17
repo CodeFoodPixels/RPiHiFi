@@ -59,14 +59,18 @@ initClient = function(service){
         if (splitStart !== -1 && splitEnd !== -1) {
             var string = streamBuffer.slice(splitStart, (splitEnd+1)),
                 obj = JSON.parse(string);
-                console.log(obj);
 
             streamBuffer = streamBuffer.slice((splitEnd+1));
 
             if (startTime === 0) {
                 startTime = obj.time;
-                beforeStart = (startTime - (new Date()).getTime() - timemodifier) - latency;
+                var now = (new Date()).getTime();
+                console.log(latency)
+                console.log(timemodifier)
+                console.log(startTime)
+                beforeStart = (startTime - now - timemodifier) - latency;
                 setTimeout(function(){
+                console.log((new Date()).getTime())
                     stream.pipe(speaker)
                 }, beforeStart);
             }
@@ -76,6 +80,9 @@ initClient = function(service){
     dataclient.on('timeout', function(){
         dataclient.destroy();
         setTimeout(function(){
+            startTime = 0;
+            stream = new Transform();
+            streamBuffer = "";
             initClient(service);
         }, 500);
     })
